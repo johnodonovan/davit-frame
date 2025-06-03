@@ -10,6 +10,12 @@ This project generates a 3D DXF file for fabricating a stainless steel metal fra
 - **Material**: Stainless Steel
 - **Construction**: Welded joints
 
+## 3D Visualization
+
+![Stainless Steel Frame Visualization](stainless_steel_frame_visualization.png)
+
+*3D rendering of the stainless steel metal frame showing the complete structure with vertical supports and horizontal rails.*
+
 ## Installation
 
 1. Install the required dependencies:
@@ -66,4 +72,4 @@ The DXF file is saved in AutoCAD 2010 format (R2010) for maximum compatibility w
 ├── requirements.txt             # Python dependencies
 ├── metal_frame_generator.py     # Main generator script
 └── stainless_steel_frame_3d.dxf # Generated DXF file (after running script)
-``` 
+```
