@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 """
-3D DXF Generator for Stainless Steel Metal Frame
-Specifications:
-- Two 48" vertical tubes (2" outer diameter)
-- Two 24" horizontal tubes (2" outer diameter)
-- Top horizontal tube at the top of verticals
-- Bottom horizontal tube 12" from bottom of verticals
-- Four 45-degree corner braces (12" long) forming triangles at top
+3D DXF Generator for 316 Stainless Steel Marine Davit Support Frame
+Final Specifications:
+- Two 30.5" vertical tubes (1.375" outer diameter, 0.095"-0.120" wall thickness)
+- Two 24.125" horizontal tubes (1.375" outer diameter, 0.095"-0.120" wall thickness)
+- Top horizontal tube at the top of verticals (30.5" height)
+- Bottom horizontal tube 5" from bottom of verticals
+- Four 45-degree corner braces (12" long, 1.125" OD) forming triangles at corners
+- 6" Low-profile flat deck cleat on center of top tube
+- Two horizontal semicircle rings (0.75" thick) on vertical tubes at 27.5" height
+- Angled support bars with mounting plates for foundation attachment
+- Material: 316 Stainless Steel (marine grade)
 """
 
 import ezdxf
@@ -14,20 +18,46 @@ import math
 from ezdxf.math import Vec3
 
 def create_metal_frame_dxf():
-    """Create a 3D DXF file for the metal frame fabrication."""
+    """Create a 3D DXF file for the marine davit support frame fabrication."""
     
     # Create a new DXF document
     doc = ezdxf.new('R2010')  # Use AutoCAD 2010 format for better compatibility
     msp = doc.modelspace()
     
-    # Frame specifications (all dimensions in inches)
-    VERTICAL_HEIGHT = 48.0
-    HORIZONTAL_LENGTH = 24.0
-    TUBE_DIAMETER = 2.0
-    TUBE_RADIUS = TUBE_DIAMETER / 2.0
-    BOTTOM_HORIZONTAL_HEIGHT = 12.0  # Height from bottom
+    # Frame specifications (all dimensions in inches) - UPDATED TO FINAL SPECS
+    VERTICAL_HEIGHT = 30.5
+    HORIZONTAL_LENGTH = 24.125
+    MAIN_TUBE_DIAMETER = 1.375
+    MAIN_TUBE_RADIUS = MAIN_TUBE_DIAMETER / 2.0
+    BRACE_TUBE_DIAMETER = 1.125
+    BRACE_TUBE_RADIUS = BRACE_TUBE_DIAMETER / 2.0
+    BOTTOM_HORIZONTAL_HEIGHT = 5.0  # UPDATED: Height from bottom (was 12", now 5")
     TOP_HORIZONTAL_HEIGHT = VERTICAL_HEIGHT  # At the top
     BRACE_LENGTH = 12.0  # Length of diagonal braces
+    
+    # Boat cleat specifications
+    CLEAT_LENGTH = 6.0  # 6" low-profile flat deck cleat
+    CLEAT_WIDTH = 1.5
+    CLEAT_HEIGHT = 0.3  # Very low profile
+    CLEAT_BASE_THICKNESS = 0.15
+    
+    # Ring specifications
+    RING_THICKNESS = 0.75
+    RING_DIAMETER = 3.0  # Outer diameter of semicircle rings
+    RING_HEIGHT = 27.5  # Height of rings on vertical tubes
+    
+    # Support bar specifications
+    SUPPORT_BAR_LENGTH = 6.0
+    SUPPORT_BAR_ATTACHMENT_HEIGHT = 14.0  # 8" above bottom rail
+    SUPPORT_BAR_PLATE_HEIGHT = BOTTOM_HORIZONTAL_HEIGHT  # At bottom rail height
+    SUPPORT_BAR_DISTANCE = 3.0  # Distance from vertical tube center
+    
+    # Mounting plate specifications
+    PLATE_WIDTH = 3.0
+    PLATE_HEIGHT = 2.0
+    PLATE_THICKNESS = 0.5
+    BOLT_HOLE_DIAMETER = 0.5
+    BOLT_HOLE_SPACING = 1.0
     
     # Spacing between vertical tubes (center to center)
     VERTICAL_SPACING = HORIZONTAL_LENGTH
@@ -55,25 +85,25 @@ def create_metal_frame_dxf():
     create_tube_solid(msp, 
                      start_point=left_vertical_center,
                      end_point=left_vertical_center + Vec3(0, 0, VERTICAL_HEIGHT),
-                     radius=TUBE_RADIUS,
+                     radius=MAIN_TUBE_RADIUS,
                      layer='VERTICAL_TUBES')
     
     # Right vertical tube
     create_tube_solid(msp,
                      start_point=right_vertical_center,
                      end_point=right_vertical_center + Vec3(0, 0, VERTICAL_HEIGHT),
-                     radius=TUBE_RADIUS,
+                     radius=MAIN_TUBE_RADIUS,
                      layer='VERTICAL_TUBES')
     
     # Create horizontal tubes as 3D solids
-    # Bottom horizontal tube (12" from bottom)
+    # Bottom horizontal tube (5" from bottom)
     bottom_horizontal_start = Vec3(0, 0, BOTTOM_HORIZONTAL_HEIGHT)
     bottom_horizontal_end = Vec3(VERTICAL_SPACING, 0, BOTTOM_HORIZONTAL_HEIGHT)
     
     create_tube_solid(msp,
                      start_point=bottom_horizontal_start,
                      end_point=bottom_horizontal_end,
-                     radius=TUBE_RADIUS,
+                     radius=MAIN_TUBE_RADIUS,
                      layer='HORIZONTAL_TUBES')
     
     # Top horizontal tube (at top of verticals)
@@ -83,7 +113,7 @@ def create_metal_frame_dxf():
     create_tube_solid(msp,
                      start_point=top_horizontal_start,
                      end_point=top_horizontal_end,
-                     radius=TUBE_RADIUS,
+                     radius=MAIN_TUBE_RADIUS,
                      layer='HORIZONTAL_TUBES')
     
     # Create diagonal corner braces at all four corners
@@ -102,7 +132,7 @@ def create_metal_frame_dxf():
     create_tube_solid(msp,
                      start_point=left_top_brace_start,
                      end_point=left_top_brace_end,
-                     radius=TUBE_RADIUS,
+                     radius=BRACE_TUBE_RADIUS,
                      layer='CORNER_BRACES')
     
     # Right top corner brace - from vertical tube to horizontal tube
@@ -113,7 +143,7 @@ def create_metal_frame_dxf():
     create_tube_solid(msp,
                      start_point=right_top_brace_start,
                      end_point=right_top_brace_end,
-                     radius=TUBE_RADIUS,
+                     radius=BRACE_TUBE_RADIUS,
                      layer='CORNER_BRACES')
     
     # BOTTOM CORNER BRACES
@@ -125,7 +155,7 @@ def create_metal_frame_dxf():
     create_tube_solid(msp,
                      start_point=left_bottom_brace_start,
                      end_point=left_bottom_brace_end,
-                     radius=TUBE_RADIUS,
+                     radius=BRACE_TUBE_RADIUS,
                      layer='CORNER_BRACES')
     
     # Right bottom corner brace - from vertical tube to horizontal tube (above the horizontal bar)
@@ -136,7 +166,7 @@ def create_metal_frame_dxf():
     create_tube_solid(msp,
                      start_point=right_bottom_brace_start,
                      end_point=right_bottom_brace_end,
-                     radius=TUBE_RADIUS,
+                     radius=BRACE_TUBE_RADIUS,
                      layer='CORNER_BRACES')
     
     # Add centerlines for fabrication reference
@@ -367,7 +397,7 @@ def add_annotations(msp):
     
     # Title
     msp.add_text(
-        "STAINLESS STEEL METAL FRAME WITH CORNER REINFORCEMENT BRACES",
+        "316 STAINLESS STEEL MARINE DAVIT SUPPORT FRAME",
         height=2.0,
         dxfattribs={'layer': 'DIMENSIONS'}
     ).set_placement(Vec3(5, -8, 0))
@@ -375,11 +405,11 @@ def add_annotations(msp):
     # Specifications
     specs = [
         "SPECIFICATIONS:",
-        "- Material: Stainless Steel",
-        "- Tube OD: 2.000\"",
-        "- Vertical Height: 48.000\"",
-        "- Horizontal Length: 24.000\"",
-        "- Bottom Rail Height: 12.000\"",
+        "- Material: 316 Stainless Steel",
+        "- Tube OD: 1.375\"",
+        "- Vertical Height: 30.500\"",
+        "- Horizontal Length: 24.125\"",
+        "- Bottom Rail Height: 5.000\"",
         "- Corner Braces: 12.000\" at 45° (4 total)",
         "- Diagonal braces at all four corners",
         "- All dimensions in inches",
@@ -395,7 +425,7 @@ def add_annotations(msp):
 
 def main():
     """Main function to generate the DXF file."""
-    print("Generating 3D DXF file for stainless steel metal frame...")
+    print("Generating 3D DXF file for stainless steel marine davit support frame...")
     
     # Create the DXF document
     doc = create_metal_frame_dxf()
@@ -406,11 +436,11 @@ def main():
     
     print(f"✓ DXF file saved as: {filename}")
     print("\nFrame Specifications:")
-    print("- Two 48\" vertical tubes (2\" OD)")
-    print("- Two 24\" horizontal tubes (2\" OD)")
-    print("- Top horizontal at 48\" height")
-    print("- Bottom horizontal at 12\" height")
-    print("- Material: Stainless Steel")
+    print("- Two 30.5\" vertical tubes (1.375\" OD)")
+    print("- Two 24.125\" horizontal tubes (1.375\" OD)")
+    print("- Top horizontal at 30.5\" height")
+    print("- Bottom horizontal at 5\" height")
+    print("- Material: 316 Stainless Steel")
     print("\nThe DXF file is ready for CAD software and fabrication!")
 
 if __name__ == "__main__":
