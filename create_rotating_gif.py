@@ -31,6 +31,17 @@ def create_frame_visualization_for_gif(azim_angle):
     TOP_HORIZONTAL_HEIGHT = VERTICAL_HEIGHT
     BRACE_LENGTH = 12.0
     
+    # Support bar specifications
+    SUPPORT_BAR_LENGTH = 6.0
+    SUPPORT_BAR_ATTACHMENT_HEIGHT = 14.0  # 8" above bottom rail (14" from ground)
+    SUPPORT_BAR_PLATE_HEIGHT = BOTTOM_HORIZONTAL_HEIGHT  # At bottom rail height (5")
+    SUPPORT_BAR_DISTANCE = 3.0  # Distance from vertical tube center
+    
+    # Mounting plate specifications
+    PLATE_WIDTH = 3.0
+    PLATE_HEIGHT = 2.0
+    PLATE_THICKNESS = 0.5
+    
     # Create figure and 3D axis
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111, projection='3d')
@@ -87,10 +98,23 @@ def create_frame_visualization_for_gif(azim_angle):
     cleat_center = np.array([HORIZONTAL_LENGTH/2, 0, TOP_HORIZONTAL_HEIGHT + 0.2])
     create_boat_cleat(ax, cleat_center, 'cyan', 'Boat Cleat')
     
-    # Add semicircle rings on vertical tubes
+    # Add semicircle rings on vertical tubes (horizontal orientation, properly connected)
     ring_height = 27.5
-    create_semicircle_ring(ax, np.array([0, 0, ring_height]), 'purple', 'Semicircle Rings')
-    create_semicircle_ring(ax, np.array([HORIZONTAL_LENGTH, 0, ring_height]), 'purple', '')
+    create_horizontal_semicircle_ring(ax, np.array([0, 0, ring_height]), 'purple', 'Semicircle Rings')
+    create_horizontal_semicircle_ring(ax, np.array([HORIZONTAL_LENGTH, 0, ring_height]), 'purple', '')
+    
+    # Add third semicircle in center of top horizontal tube (horizontal orientation)
+    center_ring_position = np.array([HORIZONTAL_LENGTH/2, 0, TOP_HORIZONTAL_HEIGHT])
+    create_center_horizontal_semicircle_ring(ax, center_ring_position, 'purple', 'Center Ring')
+    
+    # Add angled support bars with mounting plates
+    create_support_bar_system(ax, left_vertical_center, SUPPORT_BAR_ATTACHMENT_HEIGHT, 
+                             SUPPORT_BAR_PLATE_HEIGHT, SUPPORT_BAR_DISTANCE, SUPPORT_BAR_LENGTH,
+                             PLATE_WIDTH, PLATE_HEIGHT, PLATE_THICKNESS, 'orange', 'Support Bars')
+    
+    create_support_bar_system(ax, right_vertical_center, SUPPORT_BAR_ATTACHMENT_HEIGHT, 
+                             SUPPORT_BAR_PLATE_HEIGHT, SUPPORT_BAR_DISTANCE, SUPPORT_BAR_LENGTH,
+                             PLATE_WIDTH, PLATE_HEIGHT, PLATE_THICKNESS, 'orange', '')
     
     # Set axis properties
     ax.set_xlabel('Length (inches)')
@@ -99,7 +123,7 @@ def create_frame_visualization_for_gif(azim_angle):
     
     # Set equal aspect ratio and limits
     max_range = max(HORIZONTAL_LENGTH, VERTICAL_HEIGHT) * 0.6
-    ax.set_xlim([-5, HORIZONTAL_LENGTH + 5])
+    ax.set_xlim([-8, HORIZONTAL_LENGTH + 8])  # Extended to show support bars
     ax.set_ylim([-10, 10])
     ax.set_zlim([0, VERTICAL_HEIGHT + 5])
     
@@ -176,17 +200,69 @@ def create_boat_cleat(ax, center, color, label):
     ax.plot([x[0], x[1]], [center[1], center[1]], [center[2], center[2]], 
            color=color, linewidth=8, label=label)
 
-def create_semicircle_ring(ax, center, color, label):
-    """Create a semicircle ring representation."""
+def create_horizontal_semicircle_ring(ax, center, color, label):
+    """Create a horizontal semicircle ring representation."""
     ring_radius = 1.5
     theta = np.linspace(0, np.pi, 20)  # Semicircle
     
-    # Create semicircle in XZ plane (horizontal)
+    # Create semicircle in XZ plane (horizontal, extending from sides of vertical tube)
     x = center[0] + ring_radius * np.cos(theta)
     y = np.full_like(theta, center[1])
     z = center[2] + ring_radius * np.sin(theta)
     
     ax.plot(x, y, z, color=color, linewidth=6, label=label if label else None)
+
+def create_center_horizontal_semicircle_ring(ax, center, color, label):
+    """Create a center horizontal semicircle ring representation."""
+    ring_radius = 1.5
+    theta = np.linspace(0, np.pi, 20)  # Semicircle
+    
+    # Create semicircle in XY plane (horizontal, lying flat on top tube)
+    x = center[0] + ring_radius * np.cos(theta)
+    y = center[1] + ring_radius * np.sin(theta)
+    z = np.full_like(theta, center[2])
+    
+    ax.plot(x, y, z, color=color, linewidth=6, label=label if label else None)
+
+def create_support_bar_system(ax, tube_center, attachment_height, plate_height, distance, length, plate_width, plate_height_param, plate_thickness, color, label):
+    """Create a support bar system with mounting plates."""
+    # Calculate angled support bar positions
+    attachment_point = tube_center + np.array([0, 0, attachment_height])
+    plate_center = tube_center + np.array([distance, 0, plate_height])  # 3" away from tube, at bottom rail height
+    
+    # Create angled support bar from attachment point to plate
+    ax.plot([attachment_point[0], plate_center[0]], 
+           [attachment_point[1], plate_center[1]], 
+           [attachment_point[2], plate_center[2]], 
+           color=color, linewidth=4, label=label if label else None)
+    
+    # Create mounting plate (horizontal, flat on ground)
+    plate_corners = [
+        plate_center + np.array([-plate_width/2, -plate_height_param/2, 0]),
+        plate_center + np.array([plate_width/2, -plate_height_param/2, 0]),
+        plate_center + np.array([plate_width/2, plate_height_param/2, 0]),
+        plate_center + np.array([-plate_width/2, plate_height_param/2, 0]),
+        plate_center + np.array([-plate_width/2, -plate_height_param/2, 0])  # Close the rectangle
+    ]
+    
+    # Plot plate outline
+    plate_x = [corner[0] for corner in plate_corners]
+    plate_y = [corner[1] for corner in plate_corners]
+    plate_z = [corner[2] for corner in plate_corners]
+    
+    ax.plot(plate_x, plate_y, plate_z, color='yellow', linewidth=3)
+    
+    # Add bolt holes (visual representation)
+    hole_spacing = 1.0
+    hole_positions = [
+        plate_center + np.array([-hole_spacing/2, -hole_spacing/2, 0.1]),
+        plate_center + np.array([hole_spacing/2, -hole_spacing/2, 0.1]),
+        plate_center + np.array([hole_spacing/2, hole_spacing/2, 0.1]),
+        plate_center + np.array([-hole_spacing/2, hole_spacing/2, 0.1])
+    ]
+    
+    for hole_pos in hole_positions:
+        ax.scatter(hole_pos[0], hole_pos[1], hole_pos[2], color='black', s=20)
 
 def create_rotating_gif():
     """Create a rotating GIF of the 3D frame."""
